@@ -89,7 +89,7 @@ _timing()
 local function _opq1(x) return (x*x+x)%2==0 end
 local function _opq2(a,b) return (a*a-b*b)==(a+b)*(a-b) end
 
-if _opq1(tick()) and _opq2(7,3) then
+if _opq1(math.floor(tick())) and _opq2(7,3) then
     local _vr = _vmr[0]
     local _hs = bit32.bxor(_vr, os.time())
     pcall(function()
